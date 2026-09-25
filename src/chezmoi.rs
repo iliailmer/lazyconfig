@@ -66,6 +66,7 @@ pub trait Chezmoi {
     fn is_managed(&self, target: &NormalizedTarget) -> Result<bool, ChezmoiError>;
     fn source_path(&self, target: &NormalizedTarget) -> Result<PathBuf, ChezmoiError>;
     fn status(&self, target: &NormalizedTarget) -> Result<FileStatus, ChezmoiError>;
+    fn apply(&self, target: &NormalizedTarget) -> Result<(), ChezmoiError>;
 }
 
 impl<R: CommandRunner> CliChezMoi<R> {
@@ -90,9 +91,18 @@ impl<R: CommandRunner> Chezmoi for CliChezMoi<R> {
             "absolute".into(),
             target.clone(),
         ])?;
-        let managed: Vec<String> = serde_json::from_str(&output.stdout)?;
+        let output = output.stdout.trim();
 
-        Ok(managed.iter().any(|path| path == &target))
+        if output.is_empty() {
+            return Ok(false);
+        }
+
+        if output.starts_with('[') {
+            let managed: Vec<String> = serde_json::from_str(output)?;
+            return Ok(managed.iter().any(|path| path == &target));
+        }
+
+        Ok(output.lines().any(|path| path.trim() == target))
     }
 
     fn source_path(&self, target: &NormalizedTarget) -> Result<PathBuf, ChezmoiError> {
@@ -103,7 +113,9 @@ impl<R: CommandRunner> Chezmoi for CliChezMoi<R> {
         let source = output.stdout.trim();
 
         if source.is_empty() {
-            return Err(ChezmoiError::Command("chezmoi returned an empty source path".into()));
+            return Err(ChezmoiError::Command(
+                "chezmoi returned an empty source path".into(),
+            ));
         }
 
         Ok(PathBuf::from(source))
@@ -130,15 +142,18 @@ impl<R: CommandRunner> Chezmoi for CliChezMoi<R> {
 
         Ok(status)
     }
+
+    fn apply(&self, target: &NormalizedTarget) -> Result<(), ChezmoiError> {
+        self.run(vec!["apply".into(), target.as_path().display().to_string()])?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::path::Path;
 
-    use super::{
-        Chezmoi, ChezmoiError, CliChezMoi, CommandOutput, CommandRunner, FileStatus,
-    };
+    use super::{Chezmoi, ChezmoiError, CliChezMoi, CommandOutput, CommandRunner, FileStatus};
     use crate::domain::NormalizedTarget;
 
     struct ExpectedRunner {
@@ -171,11 +186,33 @@ mod tests {
                 stderr: String::new(),
             },
         });
-        let target = NormalizedTarget::from_registry_path(
-            "~/.config/nvim",
-            Path::new("/Users/tester"),
-        )
-        .unwrap();
+        let target =
+            NormalizedTarget::from_registry_path("~/.config/nvim", Path::new("/Users/tester"))
+                .unwrap();
+
+        assert!(client.is_managed(&target).unwrap());
+    }
+
+    #[test]
+    fn recognizes_a_managed_target_from_line_output() {
+        let client = CliChezMoi::new(ExpectedRunner {
+            expected_args: vec![
+                "managed".into(),
+                "--format".into(),
+                "json".into(),
+                "--path-style".into(),
+                "absolute".into(),
+                "/Users/tester/.config/nvim".into(),
+            ],
+            output: CommandOutput {
+                success: true,
+                stdout: "/Users/tester/.config/nvim\n".into(),
+                stderr: String::new(),
+            },
+        });
+        let target =
+            NormalizedTarget::from_registry_path("~/.config/nvim", Path::new("/Users/tester"))
+                .unwrap();
 
         assert!(client.is_managed(&target).unwrap());
     }
@@ -183,21 +220,16 @@ mod tests {
     #[test]
     fn resolves_a_source_path_from_chezmoi_output() {
         let client = CliChezMoi::new(ExpectedRunner {
-            expected_args: vec![
-                "source-path".into(),
-                "/Users/tester/.config/nvim".into(),
-            ],
+            expected_args: vec!["source-path".into(), "/Users/tester/.config/nvim".into()],
             output: CommandOutput {
                 success: true,
                 stdout: "/Users/tester/.local/share/chezmoi/dot_config/nvim\n".into(),
                 stderr: String::new(),
             },
         });
-        let target = NormalizedTarget::from_registry_path(
-            "~/.config/nvim",
-            Path::new("/Users/tester"),
-        )
-        .unwrap();
+        let target =
+            NormalizedTarget::from_registry_path("~/.config/nvim", Path::new("/Users/tester"))
+                .unwrap();
 
         assert_eq!(
             client.source_path(&target).unwrap(),
@@ -220,11 +252,9 @@ mod tests {
                 stderr: String::new(),
             },
         });
-        let target = NormalizedTarget::from_registry_path(
-            "~/.config/nvim",
-            Path::new("/Users/tester"),
-        )
-        .unwrap();
+        let target =
+            NormalizedTarget::from_registry_path("~/.config/nvim", Path::new("/Users/tester"))
+                .unwrap();
 
         assert_eq!(
             client.status(&target).unwrap(),
@@ -256,11 +286,9 @@ mod tests {
                 stderr: String::new(),
             },
         });
-        let target = NormalizedTarget::from_registry_path(
-            "~/.config/nvim",
-            Path::new("/Users/tester"),
-        )
-        .unwrap();
+        let target =
+            NormalizedTarget::from_registry_path("~/.config/nvim", Path::new("/Users/tester"))
+                .unwrap();
 
         client.apply(&target).unwrap();
     }

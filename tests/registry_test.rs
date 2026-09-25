@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use lazyconfig::{
-    domain::NormalizedTarget,
+    domain::{Adapter, NormalizedTarget, RegisteredApp},
     registry::{Registry, RegistryError},
 };
 
@@ -22,6 +22,13 @@ adapter = "raw"
     assert_eq!(registry.apps[0].id, "nvim");
     assert_eq!(registry.apps[0].label, "Neovim");
     assert_eq!(registry.apps[0].target, "~/.config/nvim");
+}
+
+#[test]
+fn accepts_an_empty_registry_for_first_time_discovery() {
+    let registry = Registry::parse("").unwrap();
+
+    assert!(registry.apps.is_empty());
 }
 
 #[test]
@@ -111,4 +118,45 @@ fn reports_a_missing_registry_file() {
     let error = Registry::load(&path).unwrap_err();
 
     assert!(matches!(error, RegistryError::Read { .. }));
+}
+
+#[test]
+fn appends_discovered_applications_to_the_registry_source() {
+    let path = std::env::temp_dir().join(format!(
+        "lazyconfig-registry-append-{}.toml",
+        std::process::id()
+    ));
+    fs::write(
+        &path,
+        r#"
+[[app]]
+id = "starship"
+label = "Starship"
+target = "~/.config/starship.toml"
+adapter = "starship"
+"#,
+    )
+    .unwrap();
+
+    Registry::append(
+        &path,
+        &[RegisteredApp {
+            id: "nvim".into(),
+            label: "Neovim".into(),
+            target: "~/.config/nvim".into(),
+            adapter: Adapter::Raw,
+        }],
+    )
+    .unwrap();
+
+    let registry = Registry::load(&path).unwrap();
+    fs::remove_file(&path).unwrap();
+    assert_eq!(
+        registry
+            .apps
+            .iter()
+            .map(|app| app.id.as_str())
+            .collect::<Vec<_>>(),
+        ["starship", "nvim"]
+    );
 }

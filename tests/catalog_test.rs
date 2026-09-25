@@ -55,7 +55,10 @@ fn managed_application_has_a_resolved_source_and_status() {
         panic!("expected a managed application");
     };
 
-    assert_eq!(app.target.as_path(), Path::new("/Users/tester/.config/nvim"));
+    assert_eq!(
+        app.target.as_path(),
+        Path::new("/Users/tester/.config/nvim")
+    );
     assert_eq!(app.source, PathBuf::from("/source/dot_config/nvim"));
     assert_eq!(app.status, FileStatus::clean());
 }

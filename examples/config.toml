@@ -1,0 +1,17 @@
+[[app]]
+id = "nvim"
+label = "Neovim"
+target = "~/.config/nvim"
+adapter = "raw"
+
+[[app]]
+id = "kitty"
+label = "Kitty"
+target = "~/.config/kitty"
+adapter = "raw"
+
+[[app]]
+id = "starship"
+label = "Starship"
+target = "~/.config/starship.toml"
+adapter = "starship"
