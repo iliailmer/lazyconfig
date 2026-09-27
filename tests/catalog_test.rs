@@ -29,6 +29,26 @@ impl Chezmoi for FakeChezmoi {
     }
 }
 
+struct NeverCalledChezmoi;
+
+impl Chezmoi for NeverCalledChezmoi {
+    fn is_managed(&self, _: &NormalizedTarget) -> Result<bool, ChezmoiError> {
+        panic!("ignored apps must not call ChezMoi")
+    }
+
+    fn source_path(&self, _: &NormalizedTarget) -> Result<PathBuf, ChezmoiError> {
+        panic!("ignored apps must not resolve a source path")
+    }
+
+    fn status(&self, _: &NormalizedTarget) -> Result<FileStatus, ChezmoiError> {
+        panic!("ignored apps must not check status")
+    }
+
+    fn apply(&self, _: &NormalizedTarget) -> Result<(), ChezmoiError> {
+        panic!("ignored apps must not apply")
+    }
+}
+
 fn registry_with_nvim() -> Registry {
     Registry::parse(
         r#"
@@ -77,4 +97,29 @@ fn unmanaged_application_is_reported_without_a_source_path() {
     };
 
     assert_eq!(app.id, "nvim");
+}
+
+fn ignored_registry() -> Registry {
+    Registry::parse(
+        r#"
+[[app]]
+id = "nvim"
+label = "Neovim"
+target = "~/.config/nvim"
+adapter = "raw"
+ignore = true
+"#,
+    )
+    .unwrap()
+}
+#[test]
+fn ignored_application_is_not_checked_by_chezmoi() {
+    let catalog = Catalog::load(
+        &ignored_registry(),
+        Path::new("/Users/tester"),
+        &NeverCalledChezmoi,
+    )
+    .unwrap();
+
+    assert!(catalog.apps.is_empty());
 }

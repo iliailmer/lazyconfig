@@ -18,6 +18,7 @@ fn renders_the_selected_application_and_its_source_path() {
                 label: "Neovim".into(),
                 target: "~/.config/nvim".into(),
                 adapter: Adapter::Raw,
+                ignore: false,
             },
             target: NormalizedTarget::from_registry_path(
                 "~/.config/nvim",

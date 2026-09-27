@@ -14,6 +14,7 @@ fn managed_app(id: &str, source: &str) -> AppState {
             label: id.into(),
             target: format!("~/.config/{id}"),
             adapter: Adapter::Raw,
+            ignore: false,
         },
         target: NormalizedTarget::from_registry_path(
             &format!("~/.config/{id}"),
@@ -35,6 +36,7 @@ fn moves_selection_between_managed_applications_only() {
                 label: "Ghostty".into(),
                 target: "~/.config/ghostty".into(),
                 adapter: Adapter::Raw,
+                ignore: false,
             }),
             managed_app("starship", "/source/starship.toml"),
         ],
@@ -94,6 +96,7 @@ fn edit_action_is_unavailable_when_no_application_is_managed() {
             label: "Ghostty".into(),
             target: "~/.config/ghostty".into(),
             adapter: Adapter::Raw,
+            ignore: false,
         })],
     });
 

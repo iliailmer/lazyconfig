@@ -42,6 +42,9 @@ impl Catalog {
         let mut apps = Vec::with_capacity(registry.apps.len());
 
         for app in &registry.apps {
+            if app.ignore {
+                continue;
+            }
             let target = NormalizedTarget::from_registry_path(&app.target, home)?;
             if !chezmoi.is_managed(&target)? {
                 apps.push(AppState::Unmanaged(app.clone()));

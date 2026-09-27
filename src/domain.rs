@@ -16,6 +16,8 @@ pub struct RegisteredApp {
     pub label: String,
     pub target: String,
     pub adapter: Adapter,
+    #[serde(default)]
+    pub ignore: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

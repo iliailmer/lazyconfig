@@ -127,24 +127,28 @@ fn discovered_app(entry: &str) -> RegisteredApp {
             label: "Neovim".into(),
             target: "~/.config/nvim".into(),
             adapter: Adapter::Raw,
+            ignore: false,
         },
         "kitty" => RegisteredApp {
             id: "kitty".into(),
             label: "Kitty".into(),
             target: "~/.config/kitty".into(),
             adapter: Adapter::Raw,
+            ignore: false,
         },
         "starship.toml" => RegisteredApp {
             id: "starship".into(),
             label: "Starship".into(),
             target: "~/.config/starship.toml".into(),
             adapter: Adapter::Starship,
+            ignore: false,
         },
         entry => RegisteredApp {
             id: entry.into(),
             label: entry.into(),
             target: format!("~/.config/{entry}"),
             adapter: Adapter::Raw,
+            ignore: false,
         },
     }
 }

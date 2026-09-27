@@ -49,12 +49,13 @@ fn details(app: &App) -> String {
         Some(app) => managed_details(app),
         None => "No configured application is managed by ChezMoi.\n\n[d] Discover  [q] Quit".into(),
     };
-    let problems = app
+    let problems = app //  OPTIM: kinda looks like this should not be a repeated call
         .unmanaged_apps()
         .map(|app| app.label.as_str())
         .collect::<Vec<_>>();
 
     if !problems.is_empty() {
+        // OPTIM: same as above
         text.push_str("\n\nNot managed by ChezMoi: ");
         text.push_str(&problems.join(", "));
         text.push_str(". Track these targets before using LazyConfig.");

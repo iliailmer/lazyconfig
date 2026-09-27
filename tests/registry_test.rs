@@ -145,6 +145,7 @@ adapter = "starship"
             label: "Neovim".into(),
             target: "~/.config/nvim".into(),
             adapter: Adapter::Raw,
+            ignore: false,
         }],
     )
     .unwrap();
@@ -159,4 +160,37 @@ adapter = "starship"
             .collect::<Vec<_>>(),
         ["starship", "nvim"]
     );
+}
+
+#[test]
+fn defaults_ignore_to_false() {
+    let registry = Registry::parse(
+        r#"
+  [[app]]
+  id = "nvim"
+  label = "Neovim"
+  target = "~/.config/nvim"
+  adapter = "raw"
+  "#,
+    )
+    .unwrap();
+
+    assert!(!registry.apps[0].ignore);
+}
+
+#[test]
+fn parses_ignore_as_true() {
+    let registry = Registry::parse(
+        r#"
+  [[app]]
+  id = "sketchybar"
+  label = "sketchybar"
+  target = "~/.config/sketchybar"
+  adapter = "raw"
+  ignore = true
+  "#,
+    )
+    .unwrap();
+
+    assert!(registry.apps[0].ignore);
 }
