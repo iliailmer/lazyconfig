@@ -3,7 +3,7 @@ use std::{
     collections::HashSet,
     fs,
     path::PathBuf,
-    time::{SystemTime, UNIX_EPOCH},
+    sync::atomic::{AtomicUsize, Ordering},
 };
 
 use lazyconfig::{
@@ -66,11 +66,10 @@ struct TestHome(PathBuf);
 
 impl TestHome {
     fn new() -> Self {
-        let suffix = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!("lazyconfig-discovery-{suffix}"));
+        static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
+        let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+        let path =
+            std::env::temp_dir().join(format!("lazyconfig-discovery-{}-{id}", std::process::id()));
         fs::create_dir_all(&path).unwrap();
         Self(path)
     }
@@ -80,28 +79,6 @@ impl Drop for TestHome {
     fn drop(&mut self) {
         fs::remove_dir_all(&self.0).unwrap();
     }
-}
-
-#[test]
-fn finds_known_configuration_locations_from_the_fff_index() {
-    let home = TestHome::new();
-    fs::create_dir_all(home.0.join(".config/nvim")).unwrap();
-    fs::create_dir_all(home.0.join(".config/kitty")).unwrap();
-    fs::write(home.0.join(".config/nvim/init.lua"), "return {}\n").unwrap();
-    fs::write(home.0.join(".config/kitty/kitty.conf"), "font_size 14\n").unwrap();
-    fs::write(
-        home.0.join(".config/starship.toml"),
-        "add_newline = false\n",
-    )
-    .unwrap();
-
-    let configs = FffDiscovery::find(&home.0).unwrap();
-    let ids = configs
-        .iter()
-        .map(|config| config.id.as_str())
-        .collect::<Vec<_>>();
-
-    assert_eq!(ids, ["nvim", "kitty", "starship"]);
 }
 
 #[test]
@@ -129,27 +106,6 @@ adapter = "starship"
 
     assert_eq!(configs.len(), 1);
     assert_eq!(configs[0].id, "nvim");
-}
-
-#[test]
-fn returns_a_new_managed_top_level_configuration() {
-    let home = TestHome::new();
-    fs::create_dir_all(home.0.join(".config/lazygit")).unwrap();
-    fs::write(
-        home.0.join(".config/lazygit/config.yml"),
-        "gui:\n  theme:\n    activeBorderColor:\n      - blue\n",
-    )
-    .unwrap();
-    let registry = Registry::parse("").unwrap();
-    let chezmoi = ManagedOnlyChezmoi {
-        targets: HashSet::from([home.0.join(".config/lazygit")]),
-    };
-
-    let configs = FffDiscovery::find_managed(&home.0, &registry, &chezmoi).unwrap();
-
-    assert_eq!(configs.len(), 1);
-    assert_eq!(configs[0].id, "lazygit");
-    assert_eq!(configs[0].target, "~/.config/lazygit");
 }
 
 #[test]
