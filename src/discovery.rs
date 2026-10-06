@@ -133,7 +133,7 @@ fn discovered_app(entry: &str) -> RegisteredApp {
             id: "kitty".into(),
             label: "Kitty".into(),
             target: "~/.config/kitty".into(),
-            adapter: Adapter::Raw,
+            adapter: Adapter::Kitty,
             ignore: false,
         },
         "starship.toml" => RegisteredApp {

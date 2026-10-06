@@ -8,7 +8,7 @@ adapter = "raw"
 id = "kitty"
 label = "Kitty"
 target = "~/.config/kitty"
-adapter = "raw"
+adapter = "kitty"
 
 [[app]]
 id = "starship"

@@ -36,6 +36,10 @@ impl Chezmoi for SyncChezmoi {
         unreachable!()
     }
 
+    fn diff(&self, _: &NormalizedTarget) -> Result<String, ChezmoiError> {
+        unreachable!()
+    }
+
     fn apply(&self, target: &NormalizedTarget) -> Result<(), ChezmoiError> {
         self.applied
             .borrow_mut()
@@ -54,6 +58,10 @@ impl Chezmoi for ManagedOnlyChezmoi {
     }
 
     fn status(&self, _: &NormalizedTarget) -> Result<FileStatus, ChezmoiError> {
+        unreachable!()
+    }
+
+    fn diff(&self, _: &NormalizedTarget) -> Result<String, ChezmoiError> {
         unreachable!()
     }
 

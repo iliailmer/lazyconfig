@@ -845,6 +845,7 @@ dependencies = [
  "shell-words",
  "thiserror 2.0.20",
  "toml",
+ "toml_edit",
 ]
 
 [[package]]

@@ -1,8 +1,14 @@
+pub mod adapter;
 pub mod app;
 pub mod catalog;
+pub mod change;
 pub mod chezmoi;
 pub mod discovery;
 pub mod domain;
 pub mod editor;
+pub mod field;
+pub mod kitty;
 pub mod registry;
+pub mod setup;
+pub mod starship;
 pub mod ui;

@@ -7,6 +7,7 @@ use thiserror::Error;
 #[serde(rename_all = "lowercase")]
 pub enum Adapter {
     Raw,
+    Kitty,
     Starship,
 }
 
@@ -49,5 +50,9 @@ impl NormalizedTarget {
 
     pub fn as_path(&self) -> &Path {
         &self.0
+    }
+
+    pub fn join(&self, name: &str) -> Self {
+        Self(self.0.join(name))
     }
 }

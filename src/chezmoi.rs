@@ -1,5 +1,8 @@
 //TODO: is this way of calling command line utility like chezmoi the best way?
-use std::{path::PathBuf, process::Command};
+use std::{
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
 use thiserror::Error;
 
@@ -42,6 +45,7 @@ impl CommandRunner for SystemCommandRunner {
     fn run(&self, program: &str, args: &[String]) -> Result<CommandOutput, ChezmoiError> {
         let output = Command::new(program)
             .args(args)
+            .stdin(Stdio::null())
             .output()
             .map_err(|error| ChezmoiError::Command(error.to_string()))?;
 
@@ -67,6 +71,7 @@ pub trait Chezmoi {
     fn is_managed(&self, target: &NormalizedTarget) -> Result<bool, ChezmoiError>;
     fn source_path(&self, target: &NormalizedTarget) -> Result<PathBuf, ChezmoiError>;
     fn status(&self, target: &NormalizedTarget) -> Result<FileStatus, ChezmoiError>;
+    fn diff(&self, target: &NormalizedTarget) -> Result<String, ChezmoiError>;
     fn apply(&self, target: &NormalizedTarget) -> Result<(), ChezmoiError>;
 }
 
@@ -142,6 +147,18 @@ impl<R: CommandRunner> Chezmoi for CliChezMoi<R> {
         }
 
         Ok(status)
+    }
+
+    fn diff(&self, target: &NormalizedTarget) -> Result<String, ChezmoiError> {
+        let output = self.run(vec![
+            "diff".into(),
+            "--no-pager".into(),
+            "--color=false".into(),
+            "--recursive".into(),
+            target.as_path().display().to_string(),
+        ])?;
+
+        Ok(output.stdout)
     }
 
     fn apply(&self, target: &NormalizedTarget) -> Result<(), ChezmoiError> {

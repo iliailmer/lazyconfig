@@ -24,6 +24,10 @@ impl Chezmoi for FakeChezmoi {
         Ok(FileStatus::clean())
     }
 
+    fn diff(&self, _: &NormalizedTarget) -> Result<String, ChezmoiError> {
+        unreachable!()
+    }
+
     fn apply(&self, _: &NormalizedTarget) -> Result<(), ChezmoiError> {
         Ok(())
     }
@@ -42,6 +46,10 @@ impl Chezmoi for NeverCalledChezmoi {
 
     fn status(&self, _: &NormalizedTarget) -> Result<FileStatus, ChezmoiError> {
         panic!("ignored apps must not check status")
+    }
+
+    fn diff(&self, _: &NormalizedTarget) -> Result<String, ChezmoiError> {
+        unreachable!()
     }
 
     fn apply(&self, _: &NormalizedTarget) -> Result<(), ChezmoiError> {

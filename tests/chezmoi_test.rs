@@ -73,3 +73,22 @@ fn applies_only_the_selected_target() {
 
     client.apply(&nvim_target()).unwrap();
 }
+
+#[test]
+fn reads_the_diff_of_only_the_selected_target() {
+    let client = CliChezMoi::new(ExpectedRunner {
+        expected_args: vec![
+            "diff".into(),
+            "--no-pager".into(),
+            "--color=false".into(),
+            "--recursive".into(),
+            "/Users/tester/.config/nvim".into(),
+        ],
+        stdout: "-font_size 15.0\n+font_size 16.0\n",
+    });
+
+    assert_eq!(
+        client.diff(&nvim_target()).unwrap(),
+        "-font_size 15.0\n+font_size 16.0\n"
+    );
+}
